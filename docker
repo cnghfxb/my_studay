@@ -96,5 +96,67 @@ Docker Hub （默认是国外的）
       docker restart 容器id           重启容器
       docker stop 容器id              停止当前正在执行的容器
       docker kill 容器id              强制停止当前容器
+12.列出所有正在运行的进程
+      docker ps -s
+13.查看镜像的元数据
+      docker inspect 镜像id
+14.进入当前正在运行的容器
+    方式一:
+      docker exec -it 容器id bashshell
+    方式二:
+      docker attach 容器id
+
+    区别:
+    docker exec :进入容器后开启一个新的终端，可以在里面操作 （常用）
+    docker attach : 进入正在运行的终端，不会启动新的进程
+15.拷贝容器中的文件到宿主机
+    docker cdp 容器id:容器文件路径 宿主机文件路径
+    测试:
+        docker cp 685a00fb5e93:/home/test.java /home
+
+16.docker 部署nginx
+    1.安装
+     docker pull nginx
+    2.启动
+      -d:后台启动，--name:附名，宿主机端口:容器端口
+      docker run -d --name nginx01 -p 3344:80 nginx
+    3.本机自测
+      curl localhost:3344
+    4.进入nginx 容器
+      docker exec -it nginx01 /bin/bash
+17.docker 部署tomcat
+    1.安装
+    docker pull tomcat
+    2.启动
+    docker run -d --name tomcat01 -p 3345:8080 tomcat
+    3.测试
+      注意，docker命令下载的tomcat 是一个精简版，在webapps 中是没有任何项目的，我们需要将tomcat 中的webapps.dist 复制到webapps 中，用于测试
+      cp -r webapps.dist/* webapps
+      然后外网请求宿主机的端口，就能看到tomcat 的画面
+18.可视化
+    1.portainer
+    docker run -d -p 8088:9000 \
+    --restart=always -v /var/run/docker.sock:/var/run/docker.sock --privileged=true portainer/portainer
+
+19.commit 镜像
+    docker commit 提交容器成为一个新的副本
+
+    命令和git原理类似
+    docker commit -m ""
+    测试
+       安装,启动默认的tomcat，官方的镜像默认webapps 下是没有文件的
+       cp -r webapps.dist/* webapps
+
+       将操作过的容器通过commit提交为一个镜像，以后就可以使用我们修改过的镜像。、
+       在宿主机中执行:
+       docker ps
+       docker commit -a "xuebingfan" -m="add webapps app" eee2599b7113 tomcat02:1.0
+
+       如果想要保存容器的状态，就可以通过commit来提交，获得一个镜像。
+ =========================================================================================================
+ 以上是docker 的入门的阶段
+ =========================================================================================================
+
+
 
 
