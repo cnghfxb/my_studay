@@ -193,5 +193,143 @@ Docker Hub （默认是国外的）
 
       设置了ro， 说明这个路径只能通过宿主机在操作，容器内部是无法操作的！
 
-  1.4 dockerfile
+  1.4 初识dockerfile
       dockerfile 就是用来构建docker 镜像的构建文件！ 命令脚本。
+
+      测试：
+      mkdir docker-test-volume
+      cd docker-test-volume
+
+      生成一个dockerfile 文件，名字可以随便取，但是通常为dockerfile,通过下面的脚本可以生成镜像，镜像是一层一层的，脚本一个个的命令，每个命令都是一层
+
+            FROM centos
+
+            VOLUME ["/volume01","/volume02"]
+
+            CMD echo "---end---"
+            CMD /bin/bash
+
+
+      使用下面的命令，生成我们自己的镜像：
+      docker build -f /home/docker-test-volume/dockerfile1 -t fxb/centos:1.0
+
+      通过测试，可以看到容器里的volume01和volume02 被挂载出去了。
+      这种方式使用的非常多，因为我们通常会构建自己的镜像！
+      假设构建镜像时没有挂载卷，要手动挂载 -v 卷名:容器内路径
+
+
+      实战：
+      实现mysql 的同步数据
+
+      docker run -d -p 3310:3306 -v /etc/mysql/conf.d -v /var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 --name mysql01 mysql:5.7
+
+      docker run -d -p 3311:3305 -e MYSQL_ROOT_PASSWORD=123456 --name mysql02 --volumes-from mysql01 mysql:5.7
+
+      结论：容器之间配置信息的传递，数据容器卷容器的生命周期一直持续到没有容器使用为止。
+      但是一旦持久化到了本地，这个时候，本地的数据是不会删除的。
+  1.5 dockerfile
+      介绍:
+      dockerfile 是用来构建docker镜像的文件，命令参数脚本。
+      构建步骤：
+      1.编写一个dockerfile 文件
+      2.docker build 构建成为一个镜像
+      3.docker run 运行镜像
+      4.docker push 发布镜像 （DockerHub ,阿里云镜像仓库）
+
+      很多官方镜像都是基础包，很多功能都没有，我们通常会根据自己的需求搭建自己的镜像
+
+      dockerfile 构建过程
+      基础知识:
+      1.每一个保留关键字（指令）都必须使用大写
+      2.按照从上到下顺序执行
+      3.# 表示注释
+      4.每一个指令都会创建提交一个新的镜像层，并提交。
+
+      dockerfile 是面向开发，我们以后要发布项目，做镜像，就要编写dockerfile 文件，这个文件十分简单。
+      docker镜像逐渐成为企业交付的标准，必须要掌握
+      dockerfile:构建文件，定义了一切的步骤，源代码
+      dockerImages :通过dockerfile 构建生成的镜像，最终发布和运行的产品。
+      docker容器:容器就是镜像运行起来提供服务器。
+
+
+      dockerfile 的指令:
+
+      1.FROM            :基础镜像 ，一切从这里开始构建
+      2.MAINTAINER      :镜像是谁写的，姓名+邮箱
+      3.RUN             :镜像构建时候需要运行的命令
+      4.ADD             :步骤：tomcat镜像，这个tomcat 压缩包！添加内容
+      5.WORKDIR         :镜像的工作目录
+      6.VOLUME          :挂载的目录
+      7.EXPOSE          :暴露端口配置
+      8.CMD             :指定这个容器启动的时候需要运行的命令，只有最后一个会生效，可以被替代
+      8.CMD             :指定这个容器启动的时候需要运行的命令，只有最后一个会生效，可以被替代
+      9.ENTRYPOINT      :指定这个容器启动的饿时候需要运行的命令，可以追加命令
+      10.ONBUILD        :当构建一个被继承的Dockerfile 这个时候就会运行ONBUILD 的指令，触发指令。
+      11.COPY           :类似ADD ，将我们文件拷贝到镜像中
+      12.ENV            :构建的时候设置环境变量
+
+
+      实战测试：
+      DOcker Hub中99%de 镜像都是从这个基础镜像scratch 而来的，然后配置需要的软件和配置来进行构建。
+
+      创建一个自己的centos
+
+      编写dockerfile文件:
+      FROM centos
+      MAINTAINER fxb<814271018@qq.com>
+
+      ENV MYPATH /usr/local
+      WORKDIR $MYPATH
+
+      RUN yum -y install vim
+      RUN yum -y install net-tools
+
+      EXPOSE 8888
+
+      CMD echo $MYPATH
+      CMD echo "---end---"
+      CMD /bin/bash
+
+      通过命令创建镜像
+      docker build -f mydockerfile-centos -t wxfxb/mycentos:0.1 .
+
+      测试运行我们的镜像:
+      docker run -it c3a2450598f5 /bin/bash
+
+      可以发现，启动完成后，直接进入了我们自己配置的WORKDIR :   /usr/local
+
+  1.6 发布镜像
+     1.地址https://hub.docker.com/  注册自己的账号 我的账号名是（wxfxb）
+     2.在服务器上提交自己的镜像
+     3.查看提交镜像的命令
+     [root@VM-0-16-centos ~]# docker login --help
+
+     Usage:  docker login [OPTIONS] [SERVER]
+
+     Log in to a Docker registry.
+     If no server is specified, the default is defined by the daemon.
+
+     Options:
+       -p, --password string   Password
+           --password-stdin    Take the password from stdin
+       -u, --username string   Username
+
+     4.登录后就可以提交镜像了
+     5.提交自己的镜像
+     docker push wxfxb/mycentos:0.1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
