@@ -318,9 +318,103 @@ Docker Hub （默认是国外的）
      5.提交自己的镜像
      docker push wxfxb/mycentos:0.1
 
+2.docker0 网络
+    我们每启动一个docker 容器，docker都会给docker容器分配一个ip ,我们只要安装了docker，就会有一个网卡docker0桥接模式，使用的而技术是evth-pair!
+
+3.自定义网络
+    bridge: 桥接 docker默认
+    node : 不配置网络
+    host:  和宿主机共享网络
+    container :容器网络连通（用的少，局限很大）
 
 
+   直接启动的命令 --net bridge ,而这个就是我们的docker0
+   docker run -d -P --name tomecat01 tomcat
+   docker run -d -P --name tomcat01 --net bridge tomecat
 
+   docker0 特点: 默认，域名能访问 ， --link 可以打通连接，但是不推荐使用。
+
+   我们可以自定义一个网络
+   docker network create --driver bridge --subnet 192.168.0.0/16 --gateway 192.168.0.1 mynet
+
+   查看:
+   docker network ls
+
+   查看配置元:
+   docker network inspect mynet
+
+   测试:
+   启动两个tomcat 容器:
+   docker run -d -P --name tomcat01 --net mynet tomcat
+   docker run -d -P --name tomcat02 --net mynet tomcat
+
+   执行docker network inspect mynet
+   [
+       {
+           "Name": "mynet",
+           "Id": "eb14adc205ec5292cf0abd5d8f79cbf082276e1f348d105077afc9f849211d88",
+           "Created": "2021-07-19T23:43:27.130221545+08:00",
+           "Scope": "local",
+           "Driver": "bridge",
+           "EnableIPv6": false,
+           "IPAM": {
+               "Driver": "default",
+               "Options": {},
+               "Config": [
+                   {
+                       "Subnet": "192.168.0.0/16",
+                       "Gateway": "192.168.0.1"
+                   }
+               ]
+           },
+           "Internal": false,
+           "Attachable": false,
+           "Ingress": false,
+           "ConfigFrom": {
+               "Network": ""
+           },
+           "ConfigOnly": false,
+           "Containers": {
+               "257ae1975793f1bbec77f04593615e139a01ad3b698a9d57fb25dba20bad775e": {
+                   "Name": "tomcat01",
+                   "EndpointID": "c28977962b7e1dd8c01b5c63f5a7f9dc5228658c407ef9f80dd9fb9623d8b774",
+                   "MacAddress": "02:42:c0:a8:00:02",
+                   "IPv4Address": "192.168.0.2/16",
+                   "IPv6Address": ""
+               },
+               "ff8400d03e80db6e32063c6d2d30047d4229bf58dee50e8a543156ca7c6b85f4": {
+                   "Name": "tomcat02",
+                   "EndpointID": "64c6cf49fd17d3e9a68de9c33e5ac4472462512e85e0ed1293ad147a90e908d4",
+                   "MacAddress": "02:42:c0:a8:00:03",
+                   "IPv4Address": "192.168.0.3/16",
+                   "IPv6Address": ""
+               }
+           },
+           "Options": {},
+           "Labels": {}
+       }
+   ]
+
+   测试ping连接
+   [root@VM-0-16-centos ~]# docker exec -it tomcat01 ping 192.168.0.2
+   PING 192.168.0.2 (192.168.0.2) 56(84) bytes of data.
+   64 bytes from 192.168.0.2: icmp_seq=1 ttl=64 time=0.058 ms
+   64 bytes from 192.168.0.2: icmp_seq=2 ttl=64 time=0.051 ms
+   64 bytes from 192.168.0.2: icmp_seq=3 ttl=64 time=0.052 ms
+   64 bytes from 192.168.0.2: icmp_seq=4 ttl=64 time=0.050 ms
+   ======================================================================================
+   [root@VM-0-16-centos ~]# docker exec -it tomcat01 ping tomcat02
+   PING tomcat02 (192.168.0.3) 56(84) bytes of data.
+   64 bytes from tomcat02.mynet (192.168.0.3): icmp_seq=1 ttl=64 time=0.092 ms
+   64 bytes from tomcat02.mynet (192.168.0.3): icmp_seq=2 ttl=64 time=0.083 ms
+   64 bytes from tomcat02.mynet (192.168.0.3): icmp_seq=3 ttl=64 time=0.089 ms
+   64 bytes from tomcat02.mynet (192.168.0.3): icmp_seq=4 ttl=64 time=0.086 ms
+
+   我们自定义的网络docker 都已经帮我们维护好了对应的关系，推荐平时这样使用网络。
+
+   好处:
+   redis : 不同的集群使用不同的网络，保证集群是安全和健康的
+   mysql : 不同的集群使用不同的网络，保证集群是安全和健康的
 
 
 
