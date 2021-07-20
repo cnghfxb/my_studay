@@ -417,9 +417,29 @@ Docker Hub （默认是国外的）
    mysql : 不同的集群使用不同的网络，保证集群是安全和健康的
 
 
+4.网络连通
+  测试打通 tomcat03  - mynet
+  连通之后就是将 tomcat03 放到了mynet 网络下
+
+  结论:假设要跨网路操作别人，就需要使用docker network connect 连通。
 
 
+5.SpringBoot 微服务打包Docker镜像
+ 5.1构建SpringBoot 项目
+ 5.2打包应用
+ 5.3编写dockerfile
+    FROM java:8
 
+    COPY *.jar /app.jar
+
+    CMD ["--server.port=8080"]
+
+    EXPOSE 8080
+
+    ENTRYPOINT ["java","-jar","/app.jar"]
+
+ 5.4构建镜像
+ 5.5发布运行
 
 
 
